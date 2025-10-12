@@ -1,0 +1,236 @@
+[
+  {
+    "title": "Implement Core Codebase Analysis Logic",
+    "description": "Develop the primary logic within `analyzeCodebase` to scan the project, build an in-memory model of the codebase, identify potential improvements, bugs, or new features, and generate a comprehensive list of `Task` objects. This involves parsing code, understanding dependencies, and applying predefined rules or AI-driven analysis.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/prompts/analyzerPrompt.ts"
+    ],
+    "followingTasks": [],
+    "priority": 5,
+    "ID": "task-1"
+  },
+  {
+    "title": "Refactor DockerInstance for Asynchronous Operations",
+    "description": "Modify `DockerInstance` to use asynchronous `spawn` instead of synchronous `spawnSync` for Docker commands. This will improve the responsiveness and parallelism of Docker operations, preventing blocking of the main thread.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts"
+    ],
+    "followingTasks": [],
+    "priority": 4,
+    "ID": "task-2"
+  },
+  {
+    "title": "Implement Task Execution Graph and Sorting in TaskSolver",
+    "description": "Enhance `executeTasks` in `taskSolver.ts` to correctly sort tasks by priority and build an execution graph based on `followingTasks`. This ensures tasks are executed in the correct order, respecting dependencies.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts"
+    ],
+    "followingTasks": [],
+    "priority": 5,
+    "ID": "task-3"
+  },
+  {
+    "title": "Integrate DockerManager with TaskSolver",
+    "description": "Connect the `TaskSolver` with the `DockerManager` to actually execute tasks within Docker containers. This involves passing tasks to the `DockerManager` and handling the results.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts"
+    ],
+    "followingTasks": [],
+    "priority": 4,
+    "ID": "task-4"
+  },
+  {
+    "title": "Implement Robust Docker Container Cleanup",
+    "description": "Ensure that Docker containers are reliably stopped and removed after task execution, even if tasks fail or encounter unexpected errors. This might involve adding more robust error handling and `finally` blocks in `DockerInstance` and `DockerManager`.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-5"
+  },
+  {
+    "title": "Implement Docker Resource Limits from Config",
+    "description": "Integrate `dockerMemoryMB` and `dockerCpuCores` from the `Config` into `DockerInstance` to apply resource limits when running Docker containers. This ensures tasks do not consume excessive system resources.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-6"
+  },
+  {
+    "title": "Add Docker Image Pulling Functionality",
+    "description": "Implement logic within `DockerManager` or `DockerInstance` to automatically pull the specified Docker image (`dockerImageRef`) if it's not already available locally before attempting to run containers.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-7"
+  },
+  {
+    "title": "Enhance Task Failure Handling and Rollback",
+    "description": "Improve the `TaskSolver` and `DockerManager` to handle task failures more gracefully. This includes implementing a mechanism for rolling back changes made by a failed task (if applicable) and better reporting of failure reasons.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts"
+    ],
+    "followingTasks": [],
+    "priority": 4,
+    "ID": "task-8"
+  },
+  {
+    "title": "Develop Comprehensive Task Reporting",
+    "description": "Extend the `TaskResult` interface and the reporting mechanism in `DockerManager` and `TaskSolver` to include more detailed information, such as full logs, stdout/stderr, and potentially code diffs for successful tasks.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-9"
+  },
+  {
+    "title": "Implement Agent Integration for Task Generation",
+    "description": "Develop the mechanism to integrate different `SWEAgentType`s (e.g., Gemini CLI, Claude Code) into the `analyzeCodebase` function. This involves dynamically selecting and invoking the appropriate agent based on the configuration to generate tasks.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/prompts/analyzerPrompt.ts"
+    ],
+    "followingTasks": [],
+    "priority": 5,
+    "ID": "task-10"
+  },
+  {
+    "title": "Add Unit Tests for Analyzer",
+    "description": "Create a comprehensive suite of unit tests for the `analyzeCodebase` function to ensure it correctly identifies and generates tasks based on various codebase scenarios and configurations.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/test/analyzer.test.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-11"
+  },
+  {
+    "title": "Add Unit Tests for TaskSolver",
+    "description": "Develop unit tests for `executeTasks` in `taskSolver.ts` to verify task sorting, dependency resolution, and correct execution flow, including scenarios with task failures and dependencies.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/test/taskSolver.test.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-12"
+  },
+  {
+    "title": "Add Integration Tests for DockerManager",
+    "description": "Create integration tests for `DockerManager` to cover various Docker scenarios, including successful command execution, command failures, timeouts, and resource limit application.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/test/dockerManager.test.ts"
+    ],
+    "followingTasks": [],
+    "priority": 4,
+    "ID": "task-13"
+  },
+  {
+    "title": "Implement End-to-End Testing for Main Workflow",
+    "description": "Develop end-to-end tests that simulate the entire workflow from `main.ts`, including codebase analysis, task generation, and task execution, to ensure the system functions correctly as a whole.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/main.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/test/e2e.test.ts"
+    ],
+    "followingTasks": [],
+    "priority": 4,
+    "ID": "task-14"
+  },
+  {
+    "title": "Implement Dynamic Prompt Generation/Selection",
+    "description": "Refactor `analyzerPrompt.ts` or create a new module to allow for dynamic generation or selection of prompts based on the chosen `SWEAgentType` or specific task requirements, enabling more flexible and powerful analysis.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/prompts/analyzerPrompt.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-15"
+  },
+  {
+    "title": "Add Logging and Debugging Capabilities",
+    "description": "Integrate a robust logging mechanism throughout the application (Analyzer, TaskSolver, DockerManager) to provide detailed insights into the execution flow, task status, and potential issues for easier debugging and monitoring.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts"
+    ],
+    "followingTasks": [],
+    "priority": 2,
+    "ID": "task-16"
+  },
+  {
+    "title": "Implement Task Cancellation Mechanism",
+    "description": "Add functionality to allow for the cancellation of ongoing tasks or the entire task execution process, ensuring graceful shutdown and resource release.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-17"
+  },
+  {
+    "title": "Refine Task Prioritization Algorithm",
+    "description": "Develop a more sophisticated algorithm for prioritizing tasks, potentially considering factors beyond just the `priority` field, such as estimated execution time, impact, or dependencies.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/task.ts"
+    ],
+    "followingTasks": [],
+    "priority": 2,
+    "ID": "task-18"
+  },
+  {
+    "title": "Implement a Plugin System for Analyzers/Executors",
+    "description": "Design and implement a plugin system that allows for easy extension of the codebase with custom analyzers or task executors, promoting modularity and flexibility.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/analyzer.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/taskSolver.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/config.ts"
+    ],
+    "followingTasks": [],
+    "priority": 2,
+    "ID": "task-19"
+  },
+  {
+    "title": "Improve Docker Timeout Handling",
+    "description": "Review and improve the Docker timeout handling in `DockerInstance` and `DockerManager` to ensure that containers are properly terminated and resources are released when a timeout occurs, especially for the 'sleep infinity' command.",
+    "relatedFiles": [
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerInstance.ts",
+      "/Users/xinranwang/Documents/GitHub/full-self-coding/src/dockerManager.ts"
+    ],
+    "followingTasks": [],
+    "priority": 3,
+    "ID": "task-20"
+  }
+]

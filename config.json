@@ -1,0 +1,11 @@
+{
+    "agentType": "gemini-cli",
+    "maxDockerContainers": 3,
+    "dockerImageRef": "ubuntu:latest",
+    "maxParallelDockerContainers": 1,
+    "dockerTimeoutSeconds": 600,
+    "maxTasks": 50,
+    "minTasks": 5,
+    "dockerMemoryMB": 1024,
+    "dockerCpuCores": 2
+}

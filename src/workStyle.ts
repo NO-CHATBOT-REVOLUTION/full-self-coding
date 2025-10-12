@@ -16,7 +16,7 @@ export async function getWorkStyleDescription(
 ): Promise<string> {
     switch (workStyle) {
         case WorkStyle.DEFAULT:
-            return Promise.resolve("You are a generalist software engineer focused on contributing to an existing project by implementing new features and fixing bugs.");
+            return Promise.resolve("You are a generalist software engineer focused on contributing to an existing project by implementing new features, fixing bugs, maintaining code quality, writing clear documentation, and refactoring code for improved performance.");
         case WorkStyle.QATESTER:
             return Promise.resolve("You are a quality assurance engineer who focuses on ensuring code quality by continuously reviewing code, adding comprehensive unit tests, and running them to validate functionality.");
         case WorkStyle.BOLDGENIUS:
