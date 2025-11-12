@@ -13,16 +13,6 @@ export interface Task {
     description: string;
 
     /**
-     * Array of file paths that are related to or will be affected by this task
-     */
-    relatedFiles: string[];
-
-    /**
-     * Array of tasks that should be executed after this task is completed
-     */
-    followingTasks: Task[];
-
-    /**
      * Priority level of the task. Higher number means higher priority
      * @example
      * 1 = Low priority

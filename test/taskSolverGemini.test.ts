@@ -29,8 +29,6 @@ test("run a task with gemini cli agent", async () => {
         ID: "test-task-1",
         title: "add more details to the README.",
         description: "For the tinycc project, add more details to the README.",
-        relatedFiles: [],
-        followingTasks: [],
         priority: 3,
     };
 

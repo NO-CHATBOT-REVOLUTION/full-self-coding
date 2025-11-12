@@ -56,8 +56,6 @@ describe('TaskSolverManager', () => {
                 ID: '1',
                 title: 'Test Task',
                 description: 'A test task',
-                relatedFiles: [],
-                followingTasks: [],
                 priority: 1,
             };
 
@@ -72,16 +70,12 @@ describe('TaskSolverManager', () => {
                     ID: '1',
                     title: 'Task 1',
                     description: 'First task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
                 {
                     ID: '2',
                     title: 'Task 2',
                     description: 'Second task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 2,
                 },
             ];
@@ -106,24 +100,18 @@ describe('TaskSolverManager', () => {
                     ID: '1',
                     title: 'Task 1',
                     description: 'First task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
                 {
                     ID: '2',
                     title: 'Task 2',
                     description: 'Second task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
                 {
                     ID: '3',
                     title: 'Task 3',
                     description: 'Third task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
             ];
@@ -176,16 +164,12 @@ describe('TaskSolverManager', () => {
                     ID: '1',
                     title: 'Task 1',
                     description: 'First task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
                 {
                     ID: '2',
                     title: 'Task 2',
                     description: 'Second task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
             ];
@@ -244,16 +228,12 @@ describe('TaskSolverManager', () => {
                     ID: '1',
                     title: 'Task 1',
                     description: 'First task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
                 {
                     ID: '2',
                     title: 'Task 2',
                     description: 'Second task',
-                    relatedFiles: [],
-                    followingTasks: [],
                     priority: 1,
                 },
             ];
@@ -295,8 +275,6 @@ describe('TaskSolverManager', () => {
                 ID: '1',
                 title: 'Test Task',
                 description: 'A test task',
-                relatedFiles: [],
-                followingTasks: [],
                 priority: 1,
             };
 
