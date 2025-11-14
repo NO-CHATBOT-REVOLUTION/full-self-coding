@@ -23,7 +23,7 @@ Here is your coding style:
 
 ${strCodingStyleDesription}
 
-Now your task is to analyze the whole codebase and extract tasks that need to be done. Each task should have a description and a priority. Remember that if a task is dependent on another task, it should be included in the followingTasks array. Try to add as many tasks as possible. 
+Now your task is to analyze the whole codebase and extract tasks that need to be done. Each task should have a description and a priority. Try to add as many tasks as possible. 
 
 Here are the rules:
 1. DO NOT DO ANY CODE CHANGES OR MODIFICATIONS.
