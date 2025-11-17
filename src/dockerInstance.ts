@@ -39,10 +39,14 @@ export class DockerInstance {
      */
     async startContainer(image: string): Promise<string> {
         this.containerName = `copilot-docker-${Math.random().toString(36).slice(2, 10)}`;
+
+        // wait for 0.5 seconds to make sure the container is started
+        await new Promise(resolve => setTimeout(resolve, 500));
         const startResult = spawnSync([
             "docker", "run", "-d", "--name", this.containerName, image, "sleep", "infinity"
         ]);
 
+        console.log(`Starting container ${this.containerName} with image ${image}`);
         if (startResult.exitCode !== 0) {
             const errText = streamToTextSync(startResult.stderr);
             throw new Error(`Failed to start container: ${errText || "Unknown error"}`);
@@ -88,6 +92,9 @@ export class DockerInstance {
         try {
             for (const cmd of commands) {
                 console.log(`*****Running command: ${cmd} at docker: ${this.containerName}`);
+
+                // wait for random time between 0.1 and 2 seconds to make sure the command is executed
+                await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 1900));
                 const execResult = spawnSync( {
                     cmd:[
                     "docker", "exec", this.containerName, "sh", "-c", cmd

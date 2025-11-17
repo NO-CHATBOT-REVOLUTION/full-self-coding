@@ -24,6 +24,7 @@ export class TaskSolverManager {
     async start() {
         while (this.taskQueue.length > 0 || this.activeTasks.size > 0) {
             while (this.activeTasks.size < this.maxParallelDockerContainers && this.taskQueue.length > 0) {
+                console.log(`Active tasks: ${this.activeTasks.size}, Task queue: ${this.taskQueue.length}`);
                 const task = this.taskQueue.shift();
                 if (task) {
                     this.startTask(task);
@@ -35,10 +36,14 @@ export class TaskSolverManager {
     }
 
     private async startTask(task: Task) {
+        console.log(`start task ${task.ID}`);
+        // // wait for 20 seconds
+        // await new Promise(resolve => setTimeout(resolve, 20000));
+        // return;
         const taskSolver = new TaskSolver(this.config, task, this.config.agentType, this.gitURL);
         this.activeTasks.set(task.ID, taskSolver);
-
         try {
+            console.log(`try to solve task ${task.ID}`);
             await taskSolver.solve();
             const result = taskSolver.getResult();
             this.completedTasks.push(result);

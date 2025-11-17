@@ -34,7 +34,9 @@ export class TaskSolver {
      * Solves the task and returns the result
      */
     async solve(shutdown: boolean = true){
+
       const imageRef = this.config.dockerImageRef || "node:latest";
+      console.log(`task solver is now solving task ${this.task.ID}`);
       this.dockerContainerName = await this.dockerInstance.startContainer(imageRef);
 
       // get the command
@@ -55,7 +57,7 @@ export class TaskSolver {
       console.log(dockerResult.output);
 
       // read the generated final report from /app/finalReport.json
-      const readFinalReportCommand = `cat /app/finalReport.json`;
+      const readFinalReportCommand = `node /app/diff/run.js && cat /app/finalReport.json`;
 
       const finalReportResult = await this.dockerInstance.runCommands([readFinalReportCommand], this.config.dockerTimeoutSeconds? this.config.dockerTimeoutSeconds : 0);
       if (finalReportResult.status !== DockerRunStatus.SUCCESS) {
