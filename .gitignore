@@ -179,5 +179,7 @@ dist
 
 test/apiKeySetup.ts
 
-.fsc
-.claude
+./.fsc
+./.claude
+.claude/
+.fsc/
