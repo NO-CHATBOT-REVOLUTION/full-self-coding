@@ -25,7 +25,7 @@ Here are the rules:
 4. When creating the task, please make sure that the description is rich, instruction and actionable. Make sure that the description is specific and can be followed by a human, providing clear instructions on what needs to be done. Also please provide as many tasks as possible. Your supervisor will make the final decision on which tasks to include. 
 5. The final output should be a JSON array of tasks. Even if there is only one task, it should be wrapped in an array.
 6. After JSON task array output, please double check the JSON format and syntax, and make sure that it can be parsed by TypeScript.
-7. For any string field in the JSON object, please double check that only use single quotes, and make sure that it does not contain any double quotes.
+7. For any string field in the JSON object, please double check that only use single quotes, and make sure that the string value of the field does not contain any double quotes.
 
 Below is the structure of a single task:
 
