@@ -6,6 +6,27 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+// ANSI color codes for beautiful terminal output
+const COLORS = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
+  bgRed: '\x1b[41m',
+  bgGreen: '\x1b[42m',
+  bgYellow: '\x1b[43m',
+  bgBlue: '\x1b[44m',
+  bgMagenta: '\x1b[45m',
+  bgCyan: '\x1b[46m',
+  bgWhite: '\x1b[47m'
+};
+
 
 export interface GitStateOptions {
   autoStash?: boolean;
@@ -490,6 +511,118 @@ ${backupBranch ? `Backup branch created: ${backupBranch}` : ''}`;
   }
 
   /**
+   * Generate a beautiful, colorful final report with all task information
+   */
+  private generateFinalReport(summary: {
+    totalTasks: number;
+    successfulTasks: number;
+    failedTasks: number;
+    results: Array<{
+      taskId: string;
+      taskTitle: string;
+      branchName: string;
+      success: boolean;
+      error?: string;
+    }>;
+  }): void {
+    // Helper function to get commit hash for a branch
+    const getCommitHash = (branchName: string): string => {
+      try {
+        return execSync(`git rev-parse --short ${branchName}`, {
+          cwd: this.gitRepoPath,
+          encoding: 'utf8'
+        }).trim();
+      } catch (error) {
+        return 'N/A';
+      }
+    };
+
+    // Get commit hashes for all successful tasks
+    const commitHashes = new Map<string, string>();
+    summary.results.forEach(result => {
+      if (result.success && result.branchName) {
+        commitHashes.set(result.taskId, getCommitHash(result.branchName));
+      }
+    });
+
+    // Calculate success rate
+    const successRate = summary.totalTasks > 0 ? Math.round((summary.successfulTasks / summary.totalTasks) * 100) : 0;
+
+    console.log(`\n${COLORS.bright}${COLORS.bgBlue}${COLORS.white}🚀 CODECOMMITTER FINAL REPORT 🚀${COLORS.reset}`);
+    console.log(`${COLORS.cyan}══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════${COLORS.reset}\n`);
+
+    // Summary Section
+    console.log(`${COLORS.bright}${COLORS.yellow}📊 SUMMARY STATISTICS${COLORS.reset}`);
+    console.log(`${COLORS.cyan}┌─────────────────────────────────────────────────────────────────────────────────────────────────┐${COLORS.reset}`);
+    console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.bright}Total Tasks Processed:${COLORS.reset} ${COLORS.white}${summary.totalTasks.toString().padEnd(4)}${COLORS.reset} ${COLORS.cyan}│${COLORS.reset}`);
+    console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.green}Successfully Completed:${COLORS.reset} ${COLORS.white}${summary.successfulTasks.toString().padEnd(4)}${COLORS.reset} ${COLORS.cyan}│${COLORS.reset}`);
+    console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.red}Failed Tasks:${COLORS.reset}         ${COLORS.white}${summary.failedTasks.toString().padEnd(4)}${COLORS.reset} ${COLORS.cyan}│${COLORS.reset}`);
+    console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.yellow}Success Rate:${COLORS.reset}           ${COLORS.white}${successRate}%${' '.padEnd(4)}${COLORS.reset} ${COLORS.cyan}│${COLORS.reset}`);
+    console.log(`${COLORS.cyan}└─────────────────────────────────────────────────────────────────────────────────────────────────┘${COLORS.reset}\n`);
+
+    // Original git info
+    console.log(`${COLORS.bright}${COLORS.blue}🌳 GIT REPOSITORY INFO${COLORS.reset}`);
+    console.log(`${COLORS.cyan}┌─────────────────────────────────────────────────────────────────────────────────────────────────┐${COLORS.reset}`);
+    console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.bright}Original Commit Hash:${COLORS.reset} ${COLORS.magenta}${this.originalGitNode}${COLORS.reset}`);
+    if (this.stashedChanges) {
+      console.log(`${COLORS.cyan}│${COLORS.reset} ${COLORS.yellow}⚠️  Stashed changes were restored${COLORS.reset}`);
+    }
+    console.log(`${COLORS.cyan}└─────────────────────────────────────────────────────────────────────────────────────────────────┘${COLORS.reset}\n`);
+
+    // Task details section
+    console.log(`${COLORS.bright}${COLORS.magenta}📋 TASK DETAILS${COLORS.reset}`);
+    console.log(`${COLORS.cyan}══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════${COLORS.reset}`);
+
+    summary.results.forEach((result, index) => {
+      const task = this.taskResults.find(t => t.ID === result.taskId);
+      const status = result.success ?
+        `${COLORS.bgGreen}${COLORS.white} ✓ SUCCESS ${COLORS.reset}` :
+        `${COLORS.bgRed}${COLORS.white} ✗ FAILED ${COLORS.reset}`;
+
+      console.log(`\n${COLORS.bright}${COLORS.yellow}Task ${index + 1}/${summary.totalTasks}: ${result.taskTitle}${COLORS.reset}`);
+      console.log(`${COLORS.cyan}├─ 🆔 Task ID:${COLORS.reset} ${COLORS.white}${result.taskId}${COLORS.reset}`);
+      console.log(`${COLORS.cyan}├─ 📊 Status:${COLORS.reset} ${status}`);
+
+      if (result.success && result.branchName) {
+        const commitHash = commitHashes.get(result.taskId) || 'N/A';
+        console.log(`${COLORS.cyan}├─ 🌿 Branch:${COLORS.reset} ${COLORS.green}${result.branchName}${COLORS.reset}`);
+        console.log(`${COLORS.cyan}├─ 🔗 Commit Hash:${COLORS.reset} ${COLORS.magenta}${commitHash}${COLORS.reset}`);
+      }
+
+      if (task) {
+        console.log(`${COLORS.cyan}├─ 📝 Description:${COLORS.reset} ${COLORS.dim}${task.description || 'No description provided'}${COLORS.reset}`);
+        if (task.report) {
+          console.log(`${COLORS.cyan}├─ 📄 Report:${COLORS.reset} ${COLORS.dim}${task.report}${COLORS.reset}`);
+        }
+        if (task.completedAt) {
+          const completionTime = new Date(task.completedAt).toLocaleString();
+          console.log(`${COLORS.cyan}├─ ⏰ Completed:${COLORS.reset} ${COLORS.blue}${completionTime}${COLORS.reset}`);
+        }
+      }
+
+      if (result.error) {
+        console.log(`${COLORS.cyan}├─ ❌ Error:${COLORS.reset} ${COLORS.red}${result.error}${COLORS.reset}`);
+      }
+
+      console.log(`${COLORS.cyan}└─ ${result.success ? '✅ All changes committed successfully!' : '⚠️  Task failed to complete'}${COLORS.reset}`);
+    });
+
+    // Final footer
+    console.log(`\n${COLORS.cyan}══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════${COLORS.reset}`);
+
+    if (summary.failedTasks === 0) {
+      console.log(`${COLORS.bgGreen}${COLORS.white}${COLORS.bright}🎉 ALL TASKS COMPLETED SUCCESSFULLY! 🎉${COLORS.reset}`);
+      console.log(`${COLORS.green}   Every task was processed and committed successfully.${COLORS.reset}`);
+    } else {
+      console.log(`${COLORS.bgYellow}${COLORS.white}${COLORS.bright}⚠️  ${summary.failedTasks} TASK(S) FAILED ⚠️${COLORS.reset}`);
+      console.log(`${COLORS.yellow}   Some tasks encountered errors. Please review the details above.${COLORS.reset}`);
+    }
+
+    console.log(`\n${COLORS.dim}Generated on ${new Date().toLocaleString()}${COLORS.reset}`);
+    console.log(`${COLORS.blue}💼 Thank you for using Full Self Coding! 💼${COLORS.reset}\n`);
+  }
+
+  /**
    * Main method to commit all task results
    * For each task result:
    * 1. Remember current git node (done in constructor)
@@ -557,15 +690,8 @@ ${backupBranch ? `Backup branch created: ${backupBranch}` : ''}`;
       stashedChanges: this.stashedChanges
     };
 
-    console.log(`\n=== CodeCommitter Summary ===`);
-    console.log(`Total tasks: ${summary.totalTasks}`);
-    console.log(`Successful: ${summary.successfulTasks}`);
-    console.log(`Failed: ${summary.failedTasks}`);
-    console.log(`Original git node: ${this.originalGitNode}`);
-
-    if (this.stashedChanges) {
-      console.log(`Stashed changes were restored`);
-    }
+    // Generate beautiful final report
+    this.generateFinalReport(summary);
 
     return summary;
   }
