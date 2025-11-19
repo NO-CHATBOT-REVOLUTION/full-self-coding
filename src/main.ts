@@ -106,6 +106,11 @@ export async function main(): Promise<void> {
     }
 
     fs.writeFileSync("./.fsc/finalReport_" + yymmddhhmmss + ".txt", JSON.stringify(allTaskReports, null, 2));
+
+    // also save the final report to user's home folder
+    fs.writeFileSync(process.env.HOME + "/.fsc/finalReport_" + yymmddhhmmss + ".txt", JSON.stringify(allTaskReports, null, 2));
+
+    console.log(`Final report saved to "./.fsc/finalReport_${yymmddhhmmss}.txt"`);
 }
 
 // Call the main function if this file is run directly

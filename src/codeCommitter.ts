@@ -97,7 +97,7 @@ export class CodeCommitter {
           encoding: 'utf8'
         });
 
-        console.log('Successfully applied git diff');
+        //console.log('Successfully applied git diff');
       } finally {
         // Clean up temporary file
         fs.rmSync(tempDir, { recursive: true, force: true });
@@ -161,7 +161,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
         cwd: this.gitRepoPath,
         encoding: 'utf8'
       });
-      console.log(`Returned to original git node: ${this.originalGitNode}`);
+      //console.log(`Returned to original git node: ${this.originalGitNode}`);
 
       // Clean up any leftover working directory changes
       this.cleanWorkingDirectory();
@@ -188,7 +188,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
         encoding: 'utf8'
       });
 
-      console.log('Working directory cleaned - all changes discarded');
+      //console.log('Working directory cleaned - all changes discarded');
     } catch (error) {
       console.warn(`Warning: Could not clean working directory: ${error instanceof Error ? error.message : String(error)}`);
       // Don't throw an error for cleanup failures, just log it
@@ -274,7 +274,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
         encoding: 'utf8'
       });
 
-      console.log(`Created backup branch: ${backupBranchName}`);
+      //console.log(`Created backup branch: ${backupBranchName}`);
       return backupBranchName;
     } catch (error) {
       console.warn(`Failed to create backup branch: ${error instanceof Error ? error.message : String(error)}`);
@@ -309,7 +309,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
         encoding: 'utf8'
       });
 
-      console.log('Auto-committed existing changes');
+      //console.log('Auto-committed existing changes');
       return true;
     } catch (error) {
       console.error(`Failed to auto-commit changes: ${error instanceof Error ? error.message : String(error)}`);
@@ -330,7 +330,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
       });
 
       this.stashedChanges = true;
-      console.log('Stashed existing changes');
+      //console.log('Stashed existing changes');
       return true;
     } catch (error) {
       console.error(`Failed to stash changes: ${error instanceof Error ? error.message : String(error)}`);
@@ -353,7 +353,7 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
       });
 
       this.stashedChanges = false;
-      console.log('Restored stashed changes');
+      //console.log('Restored stashed changes');
       return true;
     } catch (error) {
       console.error(`Failed to restore stashed changes: ${error instanceof Error ? error.message : String(error)}`);
@@ -367,30 +367,30 @@ Completed: ${taskResult.completedAt ? new Date(taskResult.completedAt).toISOStri
   private async handleDirtyGitRepo(): Promise<{ success: boolean; action?: string; error?: string }> {
     const statusInfo = this.getGitStatusInfo();
 
-    console.log(`Git repository is not clean:`);
-    if (statusInfo.modified.length > 0) {
-      console.log(`  Modified files: ${statusInfo.modified.join(', ')}`);
-    }
-    if (statusInfo.untracked.length > 0) {
-      console.log(`  Untracked files: ${statusInfo.untracked.join(', ')}`);
-    }
-    if (statusInfo.staged.length > 0) {
-      console.log(`  Staged files: ${statusInfo.staged.join(', ')}`);
-    }
+    // console.log(`Git repository is not clean:`);
+    // if (statusInfo.modified.length > 0) {
+    //   console.log(`  Modified files: ${statusInfo.modified.join(', ')}`);
+    // }
+    // if (statusInfo.untracked.length > 0) {
+    //   console.log(`  Untracked files: ${statusInfo.untracked.join(', ')}`);
+    // }
+    // if (statusInfo.staged.length > 0) {
+    //   console.log(`  Staged files: ${statusInfo.staged.join(', ')}`);
+    // }
 
     // Create backup branch if specified
     const backupBranch = this.createBackupBranch();
 
     // Try different cleanup strategies based on options
     if (this.gitStateOptions.autoStash) {
-      console.log('Attempting to stash changes...');
+      //console.log('Attempting to stash changes...');
       if (this.stashChanges()) {
         return { success: true, action: 'stash' };
       }
     }
 
     if (this.gitStateOptions.autoCommit) {
-      console.log('Attempting to auto-commit changes...');
+      //console.log('Attempting to auto-commit changes...');
       if (this.autoCommitChanges()) {
         return { success: true, action: 'commit' };
       }
