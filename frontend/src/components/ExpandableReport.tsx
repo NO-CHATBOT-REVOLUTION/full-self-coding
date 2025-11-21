@@ -5,7 +5,7 @@ interface ExpandableReportProps {
   maxHeight?: string;
 }
 
-export const ExpandableReport: React.FC<ExpandableReportProps> = ({ report, maxHeight = '300px' }) => {
+export const ExpandableReport: React.FC<ExpandableReportProps> = ({ report, maxHeight = '500px' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpand = () => {
@@ -14,10 +14,10 @@ export const ExpandableReport: React.FC<ExpandableReportProps> = ({ report, maxH
 
   return (
     <div className="expandable-report">
-      <button className="expand-button" onClick={toggleExpand}>
+      <div className="expand-button" onClick={toggleExpand}>
         <span>{isExpanded ? '▼' : '▶'}</span>
         <span>{isExpanded ? 'Collapse Report' : 'Expand Report'}</span>
-      </button>
+      </div>
       {isExpanded && (
         <div className="report-content" style={{ maxHeight }}>
           {report}

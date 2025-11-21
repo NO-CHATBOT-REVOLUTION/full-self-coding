@@ -31,7 +31,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onViewTask }) => {
                 <td className="commit-hash">{task.id}</td>
                 <td>{task.description}</td>
                 <td>
-                  <ExpandableReport report={task.detailedReport} maxHeight="200px" />
+                  <ExpandableReport report={task.detailedReport} />
                 </td>
                 <td className="commit-hash">{task.pushedGitHash.substring(0, 7)}</td>
                 <td className="branch-name">{task.pushedGitBranch}</td>

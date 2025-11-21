@@ -13,7 +13,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', width: '100vw' }}>
       <header style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h1 style={{
           color: '#006666',
