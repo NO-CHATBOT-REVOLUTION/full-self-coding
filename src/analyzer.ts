@@ -8,6 +8,7 @@ import { trimJSONObjectArray } from './utils/trimJSON';
 import { getClaudeCommand } from './SWEAgent/claudeCodeCommands';
 import { getGeminiCommand } from './SWEAgent/geminiCodeCommands';
 import { CursorInstallationWrapper, getCursorCommand } from './SWEAgent/cursorCommands';
+import { getCodexCommand } from './SWEAgent/codexCommands';
 
 /**
  * Analyzes the codebase and generates a list of tasks to be executed
@@ -118,7 +119,8 @@ export async function analyzeCodebase(
                 allCommands.push(getClaudeCommand(config, true));
                 break;
             case SWEAgentType.CODEX:
-                throw new Error("SWEAgentType.CODEX is not implemented yet for analyzeCodebase");
+                allCommands.push(getCodexCommand(config , true))
+                break;
             case SWEAgentType.CURSOR:
                 allCommands.push(getCursorCommand(config, true));
                 break;
