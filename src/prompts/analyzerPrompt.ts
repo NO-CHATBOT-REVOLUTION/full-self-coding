@@ -59,7 +59,9 @@ interface Task {
 
 And you need to return a list of tasks that follow the above structure.
 
-Here are some extra messages:
+As a code analyzer, here are some extra instructions for you.
+
+${config.specialInstructionsForCodeAnalyzer ?? ''}
 
 ${config.customizedMessage ?? ''}
 

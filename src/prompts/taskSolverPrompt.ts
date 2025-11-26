@@ -27,7 +27,9 @@ Now please complete your task. Here are the rules:
 7. After all tasks are completed, please run "node /app/diff/run.js". This script will save the structured git diff to /app/git_diff.txt.
 8. For any string field in the JSON object, please double check that only use single quotes, and make sure that it does not contain any double quotes.
 
-Here are some extra messages:
+As a task solver, here are some extra instructions for you.
+
+${config.specialInstructionsForTaskSolver ?? ''}
 
 ${config.customizedMessage ?? ''}
 

@@ -148,6 +148,16 @@ export interface Config {
      * This is the only way to access and git clone your private repositories.
      */
     useGithubSSH?: boolean;
+
+    /**
+     * special instructions for task solver
+     */
+    specialInstructionsForTaskSolver?: string;
+
+    /**
+     * special instructions for code analyzer
+     */
+    specialInstructionsForCodeAnalyzer?: string;
 }
 
 /**
