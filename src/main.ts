@@ -53,10 +53,7 @@ export async function main(): Promise<void> {
 
     // Log key configuration details
     console.log('Configuration loaded:');
-    console.log(`  Agent Type: ${config.agentType}`);
-    console.log(`  Max Docker Containers: ${config.maxDockerContainers}`);
-    console.log(`  Docker Image: ${config.dockerImageRef}`);
-    console.log(`  Work Style: ${config.workStyle}`);
+    console.log(JSON.stringify(config, null, 2));
 
     let gitRemoteUrl: string;
     try {
