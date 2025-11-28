@@ -62,6 +62,7 @@ export async function main(): Promise<void> {
 
     // Log key configuration details
     console.log('Configuration loaded:');
+
     console.log(`  Agent Type: ${config.agentType}`);
     console.log(`  Max Docker Containers: ${config.maxDockerContainers}`);
     console.log(`  Docker Image: ${config.dockerImageRef}`);

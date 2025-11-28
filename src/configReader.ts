@@ -173,7 +173,7 @@ export class ConfigReader {
 
         // Validate numeric fields
         this.validateNumericField(validatedConfig, 'maxDockerContainers', 1, 100);
-        this.validateNumericField(validatedConfig, 'maxParallelDockerContainers', 1, 50);
+        this.validateNumericField(validatedConfig, 'maxParallelDockerContainers', 1, 1000000);
         this.validateNumericField(validatedConfig, 'dockerTimeoutSeconds', 1, 360000000);
         // this.validateNumericField(validatedConfig, 'maxTasks', 1, 1000);
         // this.validateNumericField(validatedConfig, 'minTasks', 1, 100);
