@@ -1,0 +1,831 @@
+#!/usr/bin/env bun
+
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'http';
+import analyzeCodebase from './analyzer';
+import { TaskSolverManager } from './taskSolverManager';
+import { createConfig, type Config } from './config';
+import { readConfigWithEnv } from './configReader';
+import { getGitRemoteUrls } from './utils/git';
+import { getYYMMDDHHMMSS } from './utils/getDateAndTime';
+import fs from 'fs';
+import path from 'path';
+import { randomUUID } from 'crypto';
+
+// Type definitions for our server API
+interface ServerTask {
+  id: string;
+  directory: string;
+  status: 'pending' | 'analyzing' | 'analyzed' | 'solving' | 'completed' | 'failed' | 'stopped';
+  tasks?: any[];
+  analysis?: any;
+  reports?: any[];
+  progress?: number;
+  error?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+}
+
+interface ServerState {
+  codeAnalyzer: {
+    status: 'idle' | 'analyzing' | 'completed' | 'stopped' | 'error';
+    taskId?: string;
+    analysis?: any;
+    error?: string;
+    startedAt?: Date;
+    completedAt?: Date;
+  };
+  taskSolverManager: {
+    status: 'idle' | 'running' | 'stopped' | 'completed' | 'error';
+    taskId?: string;
+    manager?: any;
+    progress?: number;
+    reports?: any[];
+    error?: string;
+    startedAt?: Date;
+    completedAt?: Date;
+  };
+  tasks: Map<string, ServerTask>;
+}
+
+// Global state for the server
+const serverState: ServerState = {
+  codeAnalyzer: { status: 'idle' },
+  taskSolverManager: { status: 'idle' },
+  tasks: new Map()
+};
+
+// Create Express app
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Utility functions
+function createResponse(success: boolean, data: any = null, error: string = null) {
+  return {
+    success,
+    data,
+    error,
+    timestamp: new Date().toISOString()
+  };
+}
+
+function sanitizePath(inputPath: string): string {
+  // Basic path sanitization to prevent directory traversal
+  // Remove .. sequences but keep absolute paths intact
+  return inputPath.replace(/\.\./g, '');
+}
+
+// API Routes
+
+/**
+ * Health check endpoint
+ */
+app.get('/health', (req, res) => {
+  res.json(createResponse(true, {
+    status: 'healthy',
+    uptime: process.uptime(),
+    tasks: serverState.tasks.size,
+    codeAnalyzerStatus: serverState.codeAnalyzer.status,
+    taskSolverManagerStatus: serverState.taskSolverManager.status
+  }));
+});
+
+/**
+ * Start a task for a given directory
+ */
+app.post('/api/tasks/start', async (req, res) => {
+  try {
+    const { directory } = req.body;
+
+    if (!directory) {
+      return res.status(400).json(createResponse(false, null, 'Directory path is required'));
+    }
+
+    const sanitizedDir = sanitizePath(directory);
+    const fullPath = path.resolve(sanitizedDir);
+
+    // Check if directory exists
+    try {
+      const stats = await fs.promises.stat(fullPath);
+      if (!stats.isDirectory()) {
+        return res.status(400).json(createResponse(false, null, 'Path is not a directory'));
+      }
+    } catch {
+      return res.status(400).json(createResponse(false, null, 'Directory does not exist'));
+    }
+
+    // Create task
+    const taskId = randomUUID();
+    const task: ServerTask = {
+      id: taskId,
+      directory: sanitizedDir,
+      status: 'pending',
+      progress: 0,
+      startedAt: new Date()
+    };
+
+    serverState.tasks.set(taskId, task);
+
+    // Start analysis in background
+    setTimeout(async () => {
+      try {
+        task.status = 'analyzing';
+        task.progress = 10;
+
+        // Load configuration
+        const config = readConfigWithEnv();
+        const { fetchUrl } = await getGitRemoteUrls(config.useGithubSSH);
+        const gitRemoteUrl = fetchUrl || '';
+
+        // Analyze codebase
+        task.progress = 30;
+        const tasks = await analyzeCodebase(config, gitRemoteUrl);
+
+        task.status = 'analyzed';
+        task.tasks = tasks;
+        task.analysis = { taskCount: tasks.length, directory: sanitizedDir };
+        task.progress = 50;
+
+        serverState.tasks.set(taskId, task);
+
+        // Auto-start task solver manager if not already running
+        if (serverState.taskSolverManager.status === 'idle') {
+          await startTaskSolverManager(taskId, tasks, config, gitRemoteUrl);
+        }
+
+      } catch (error) {
+        task.status = 'failed';
+        task.error = error instanceof Error ? error.message : 'Unknown error';
+        task.completedAt = new Date();
+        serverState.tasks.set(taskId, task);
+      }
+    }, 100);
+
+    res.json(createResponse(true, { taskId, status: 'pending' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Start a task for a remote git repository
+ */
+app.post('/api/tasks/start-remote', async (req, res) => {
+  try {
+    const { gitRemoteUrl, projectName } = req.body;
+
+    if (!gitRemoteUrl) {
+      return res.status(400).json(createResponse(false, null, 'Git remote URL is required'));
+    }
+
+    // Validate git URL format
+    const gitUrlPattern = /^https:\/\/github\.com\/[^\/]+\/[^\/]+(\.git)?$/;
+    const sshUrlPattern = /^git@github\.com:[^\/]+\/[^\/]+(\.git)?$/;
+
+    if (!gitUrlPattern.test(gitRemoteUrl) && !sshUrlPattern.test(gitRemoteUrl)) {
+      return res.status(400).json(createResponse(false, null, 'Invalid git repository URL format'));
+    }
+
+    // Create workspace directory
+    const workspaceDir = path.join(process.cwd(), 'workspace');
+    if (!fs.existsSync(workspaceDir)) {
+      await fs.promises.mkdir(workspaceDir, { recursive: true });
+    }
+
+    // Generate project name from URL if not provided
+    const finalProjectName = projectName || gitRemoteUrl.split('/').pop()?.replace('.git', '') || 'repo';
+    const projectDir = path.join(workspaceDir, `${finalProjectName}-${Date.now()}`);
+
+    // Create task
+    const taskId = randomUUID();
+    const task: ServerTask = {
+      id: taskId,
+      directory: projectDir,
+      status: 'pending',
+      progress: 0,
+      startedAt: new Date()
+    };
+
+    serverState.tasks.set(taskId, task);
+
+    // Start cloning and analysis in background
+    setTimeout(async () => {
+      try {
+        task.status = 'analyzing';
+        task.progress = 5;
+
+        // Clone the repository
+        task.progress = 10;
+        const { execSync } = await import('child_process');
+
+        try {
+          execSync(`git clone "${gitRemoteUrl}" "${projectDir}"`, {
+            stdio: 'pipe',
+            timeout: 300000 // 5 minutes timeout
+          });
+          task.progress = 25;
+        } catch (error) {
+          throw new Error(`Failed to clone repository: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+
+        // Load configuration
+        const config = readConfigWithEnv();
+
+        // Analyze codebase with the remote URL
+        task.progress = 30;
+        const tasks = await analyzeCodebase(config, gitRemoteUrl, true);
+
+        task.status = 'analyzed';
+        task.tasks = tasks;
+        task.analysis = {
+          taskCount: tasks.length,
+          directory: projectDir,
+          gitRemoteUrl,
+          projectName: finalProjectName,
+          type: 'remote'
+        };
+        task.progress = 50;
+
+        serverState.tasks.set(taskId, task);
+
+        // Auto-start task solver manager if not already running
+        if (serverState.taskSolverManager.status === 'idle') {
+          await startTaskSolverManager(taskId, tasks, config, gitRemoteUrl);
+        }
+
+      } catch (error) {
+        task.status = 'failed';
+        task.error = error instanceof Error ? error.message : 'Unknown error';
+        task.completedAt = new Date();
+
+        // Clean up directory if it exists and failed
+        try {
+          await fs.promises.rm(projectDir, { recursive: true, force: true });
+        } catch {
+          // Ignore cleanup errors
+        }
+
+        serverState.tasks.set(taskId, task);
+      }
+    }, 100);
+
+    res.json(createResponse(true, {
+      taskId,
+      status: 'pending',
+      gitRemoteUrl,
+      projectName: finalProjectName,
+      workspaceDir: projectDir
+    }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Get task status and progress
+ */
+app.get('/api/tasks/:taskId', (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const task = serverState.tasks.get(taskId);
+
+    if (!task) {
+      return res.status(404).json(createResponse(false, null, 'Task not found'));
+    }
+
+    res.json(createResponse(true, task));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Get all tasks
+ */
+app.get('/api/tasks', (req, res) => {
+  try {
+    const tasks = Array.from(serverState.tasks.values());
+    res.json(createResponse(true, { tasks, count: tasks.length }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Start code analyzer
+ */
+app.post('/api/analyzer/start', async (req, res) => {
+  try {
+    const { directory } = req.body;
+
+    if (serverState.codeAnalyzer.status !== 'idle') {
+      return res.status(400).json(createResponse(false, null, 'Code analyzer is already running'));
+    }
+
+    const taskId = randomUUID();
+    serverState.codeAnalyzer = {
+      status: 'analyzing',
+      taskId,
+      startedAt: new Date()
+    };
+
+    // Start analysis in background
+    setTimeout(async () => {
+      try {
+        const config = readConfigWithEnv();
+        const { fetchUrl } = await getGitRemoteUrls(config.useGithubSSH);
+        const gitRemoteUrl = fetchUrl || '';
+
+        const analysis = await analyzeCodebase(config, gitRemoteUrl);
+
+        serverState.codeAnalyzer = {
+          status: 'completed',
+          taskId,
+          analysis: { taskCount: analysis.length, directory },
+          completedAt: new Date()
+        };
+
+      } catch (error) {
+        serverState.codeAnalyzer = {
+          status: 'error',
+          taskId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          completedAt: new Date()
+        };
+      }
+    }, 100);
+
+    res.json(createResponse(true, { taskId, status: 'analyzing' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Read code analyzer report
+ */
+app.get('/api/analyzer/report', (req, res) => {
+  try {
+    if (serverState.codeAnalyzer.status !== 'completed') {
+      return res.status(400).json(createResponse(false, null, 'No completed analysis available'));
+    }
+
+    res.json(createResponse(true, serverState.codeAnalyzer));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Get code analyzer status
+ */
+app.get('/api/analyzer/status', (req, res) => {
+  try {
+    res.json(createResponse(true, serverState.codeAnalyzer));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Stop code analyzer
+ */
+app.post('/api/analyzer/stop', (req, res) => {
+  try {
+    if (serverState.codeAnalyzer.status !== 'analyzing') {
+      return res.status(400).json(createResponse(false, null, 'Code analyzer is not currently running'));
+    }
+
+    const previousStatus = serverState.codeAnalyzer.status;
+    serverState.codeAnalyzer = {
+      ...serverState.codeAnalyzer,
+      status: 'stopped',
+      completedAt: new Date()
+    };
+
+    res.json(createResponse(true, { previousStatus, currentStatus: 'stopped' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Start task solver manager
+ */
+app.post('/api/task-solver/start', async (req, res) => {
+  try {
+    const { taskId, tasks } = req.body;
+
+    if (serverState.taskSolverManager.status !== 'idle') {
+      return res.status(400).json(createResponse(false, null, 'Task solver manager is already running'));
+    }
+
+    if (!taskId || !tasks) {
+      return res.status(400).json(createResponse(false, null, 'Task ID and tasks are required'));
+    }
+
+    const config = readConfigWithEnv();
+    const { fetchUrl } = await getGitRemoteUrls(config.useGithubSSH);
+    const gitRemoteUrl = fetchUrl || '';
+
+    await startTaskSolverManager(taskId, tasks, config, gitRemoteUrl);
+
+    res.json(createResponse(true, { taskId, status: 'running' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Monitor task solver manager progress
+ */
+app.get('/api/task-solver/progress', (req, res) => {
+  try {
+    const response = {
+      ...serverState.taskSolverManager,
+      currentTaskCount: serverState.tasks.size,
+      tasks: Array.from(serverState.tasks.values()).map(task => ({
+        id: task.id,
+        directory: task.directory,
+        status: task.status,
+        progress: task.progress
+      }))
+    };
+
+    res.json(createResponse(true, response));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Get final report of task solver manager
+ */
+app.get('/api/task-solver/report', (req, res) => {
+  try {
+    if (serverState.taskSolverManager.status !== 'completed') {
+      return res.status(400).json(createResponse(false, null, 'Task solver manager has not completed execution'));
+    }
+
+    res.json(createResponse(true, serverState.taskSolverManager.reports));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Get task solver manager status
+ */
+app.get('/api/task-solver/status', (req, res) => {
+  try {
+    res.json(createResponse(true, serverState.taskSolverManager));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Stop task solver manager
+ */
+app.post('/api/task-solver/stop', (req, res) => {
+  try {
+    if (serverState.taskSolverManager.status !== 'running') {
+      return res.status(400).json(createResponse(false, null, 'Task solver manager is not currently running'));
+    }
+
+    const manager = serverState.taskSolverManager.manager;
+    if (manager && typeof manager.stop === 'function') {
+      manager.stop();
+    }
+
+    const previousStatus = serverState.taskSolverManager.status;
+    serverState.taskSolverManager = {
+      ...serverState.taskSolverManager,
+      status: 'stopped',
+      completedAt: new Date()
+    };
+
+    res.json(createResponse(true, { previousStatus, currentStatus: 'stopped' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Emergency stop - stop all running components
+ */
+app.post('/api/emergency-stop', (req, res) => {
+  try {
+    const stoppedComponents: string[] = [];
+
+    // Stop code analyzer
+    if (serverState.codeAnalyzer.status === 'analyzing') {
+      serverState.codeAnalyzer = {
+        ...serverState.codeAnalyzer,
+        status: 'stopped',
+        completedAt: new Date()
+      };
+      stoppedComponents.push('codeAnalyzer');
+    }
+
+    // Stop task solver manager
+    if (serverState.taskSolverManager.status === 'running') {
+      const manager = serverState.taskSolverManager.manager;
+      if (manager && typeof manager.stop === 'function') {
+        manager.stop();
+      }
+
+      serverState.taskSolverManager = {
+        ...serverState.taskSolverManager,
+        status: 'stopped',
+        completedAt: new Date()
+      };
+      stoppedComponents.push('taskSolverManager');
+    }
+
+    // Stop all running tasks
+    for (const [taskId, task] of serverState.tasks.entries()) {
+      if (task.status === 'analyzing' || task.status === 'solving') {
+        task.status = 'stopped';
+        task.completedAt = new Date();
+        stoppedComponents.push(`task-${taskId}`);
+      }
+    }
+
+    res.json(createResponse(true, {
+      stoppedComponents,
+      message: 'Emergency stop completed successfully'
+    }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Stop a specific task solver in emergency
+ */
+app.post('/api/emergency-stop/task-solver/:taskId', (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const task = serverState.tasks.get(taskId);
+
+    if (!task) {
+      return res.status(404).json(createResponse(false, null, 'Task not found'));
+    }
+
+    if (task.status !== 'solving') {
+      return res.status(400).json(createResponse(false, null, 'Task is not currently solving'));
+    }
+
+    task.status = 'stopped';
+    task.completedAt = new Date();
+    serverState.tasks.set(taskId, task);
+
+    res.json(createResponse(true, { taskId, status: 'stopped' }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Clean up workspace by removing old cloned repositories
+ */
+app.post('/api/workspace/cleanup', async (req, res) => {
+  try {
+    const { olderThanDays = 7 } = req.body;
+    const workspaceDir = path.join(process.cwd(), 'workspace');
+
+    if (!fs.existsSync(workspaceDir)) {
+      return res.json(createResponse(true, { message: 'Workspace directory does not exist', cleaned: 0 }));
+    }
+
+    const cutoffTime = Date.now() - (olderThanDays * 24 * 60 * 60 * 1000);
+    let cleanedCount = 0;
+
+    const entries = await fs.promises.readdir(workspaceDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const entryPath = path.join(workspaceDir, entry.name);
+        try {
+          const stats = await fs.promises.stat(entryPath);
+
+          if (stats.mtime.getTime() < cutoffTime) {
+            await fs.promises.rm(entryPath, { recursive: true, force: true });
+            cleanedCount++;
+            console.log(`Cleaned up old workspace: ${entry.name}`);
+          }
+        } catch (error) {
+          console.warn(`Failed to clean up ${entry.name}:`, error);
+        }
+      }
+    }
+
+    res.json(createResponse(true, {
+      message: `Workspace cleanup completed`,
+      cleaned: cleanedCount,
+      olderThanDays
+    }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * List workspace directories
+ */
+app.get('/api/workspace', async (req, res) => {
+  try {
+    const workspaceDir = path.join(process.cwd(), 'workspace');
+
+    if (!fs.existsSync(workspaceDir)) {
+      return res.json(createResponse(true, { workspaceDir, projects: [], count: 0 }));
+    }
+
+    const entries = await fs.promises.readdir(workspaceDir, { withFileTypes: true });
+    const projects = [];
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const entryPath = path.join(workspaceDir, entry.name);
+        try {
+          const stats = await fs.promises.stat(entryPath);
+
+          projects.push({
+            name: entry.name,
+            path: entryPath,
+            createdAt: stats.birthtime,
+            modifiedAt: stats.mtime,
+            size: stats.size
+          });
+        } catch (error) {
+          console.warn(`Failed to read stats for ${entry.name}:`, error);
+        }
+      }
+    }
+
+    projects.sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime());
+
+    res.json(createResponse(true, {
+      workspaceDir,
+      projects,
+      count: projects.length
+    }));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+/**
+ * Server status dashboard
+ */
+app.get('/api/dashboard', (req, res) => {
+  try {
+    const dashboard = {
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      codeAnalyzer: serverState.codeAnalyzer,
+      taskSolverManager: serverState.taskSolverManager,
+      tasks: {
+        total: serverState.tasks.size,
+        pending: Array.from(serverState.tasks.values()).filter(t => t.status === 'pending').length,
+        analyzing: Array.from(serverState.tasks.values()).filter(t => t.status === 'analyzing').length,
+        analyzed: Array.from(serverState.tasks.values()).filter(t => t.status === 'analyzed').length,
+        solving: Array.from(serverState.tasks.values()).filter(t => t.status === 'solving').length,
+        completed: Array.from(serverState.tasks.values()).filter(t => t.status === 'completed').length,
+        failed: Array.from(serverState.tasks.values()).filter(t => t.status === 'failed').length,
+        stopped: Array.from(serverState.tasks.values()).filter(t => t.status === 'stopped').length
+      }
+    };
+
+    res.json(createResponse(true, dashboard));
+
+  } catch (error) {
+    res.status(500).json(createResponse(false, null, error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
+
+// Helper function to start task solver manager
+async function startTaskSolverManager(taskId: string, tasks: any[], config: Config, gitRemoteUrl: string) {
+  try {
+    serverState.taskSolverManager = {
+      status: 'running',
+      taskId,
+      manager: null,
+      progress: 0,
+      startedAt: new Date()
+    };
+
+    const taskSolverManager = new TaskSolverManager(config, gitRemoteUrl);
+
+    // Add tasks to manager
+    for (const task of tasks) {
+      taskSolverManager.addTask(task);
+    }
+
+    serverState.taskSolverManager.manager = taskSolverManager;
+
+    // Start manager in background
+    setTimeout(async () => {
+      try {
+        await taskSolverManager.start();
+
+        const reports = taskSolverManager.getReports();
+
+        serverState.taskSolverManager = {
+          status: 'completed',
+          taskId,
+          manager: null,
+          progress: 100,
+          reports,
+          completedAt: new Date()
+        };
+
+        // Update task status
+        const task = serverState.tasks.get(taskId);
+        if (task) {
+          task.status = 'completed';
+          task.reports = reports;
+          task.completedAt = new Date();
+          serverState.tasks.set(taskId, task);
+        }
+
+      } catch (error) {
+        serverState.taskSolverManager = {
+          status: 'error',
+          taskId,
+          manager: null,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          completedAt: new Date()
+        };
+
+        // Update task status
+        const task = serverState.tasks.get(taskId);
+        if (task) {
+          task.status = 'failed';
+          task.error = error instanceof Error ? error.message : 'Unknown error';
+          task.completedAt = new Date();
+          serverState.tasks.set(taskId, task);
+        }
+      }
+    }, 100);
+
+  } catch (error) {
+    serverState.taskSolverManager = {
+      status: 'error',
+      taskId,
+      manager: null,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      completedAt: new Date()
+    };
+  }
+}
+
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json(createResponse(false, null, 'Internal server error'));
+});
+
+// 404 handler
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json(createResponse(false, null, 'Endpoint not found'));
+});
+
+// Start server
+export function startServer(port: number = 3000) {
+  const httpServer = createServer(app);
+
+  httpServer.listen(port, () => {
+    console.log(`🚀 Full Self-Coding Server running on http://localhost:${port}`);
+    console.log(`📊 Dashboard: http://localhost:${port}/api/dashboard`);
+    console.log(`🏥 Health Check: http://localhost:${port}/health`);
+  });
+
+  return httpServer;
+}
+
+// Start server if this file is run directly
+if (import.meta.main) {
+  const port = parseInt(process.argv[2]) || 3000;
+  startServer(port);
+}

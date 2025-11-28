@@ -4,10 +4,11 @@ import analyzeCodebase from "./analyzer";
 import { TaskSolverManager } from "./taskSolverManager";
 import { createConfig, type Config } from './config';
 import { readConfigWithEnv } from './configReader';
-import { getGitRemoteUrls } from './utils/git'; 
+import { getGitRemoteUrls } from './utils/git';
 import { CodeCommitter } from './codeCommitter';
 import fs from 'fs';
 import { getYYMMDDHHMMSS } from './utils/getDateAndTime';
+import { startServer } from './server/index';
 
 import type { Task } from './task';
 
@@ -15,6 +16,14 @@ import type { Task } from './task';
 export let appConfig: Config;
 
 export async function main(): Promise<void> {
+    // Check if --server argument is provided
+    const serverIndex = process.argv.indexOf('--server');
+    if (serverIndex > -1) {
+        const port = parseInt(process.argv[serverIndex + 1]) || 3000;
+        console.log(`🚀 Starting Full Self-Coding Server in server mode on port ${port}`);
+        startServer(port);
+        return;
+    }
 
     // Load configuration from standard location with environment variable overrides
     let config: Config;
@@ -57,6 +66,8 @@ export async function main(): Promise<void> {
     console.log(`  Max Docker Containers: ${config.maxDockerContainers}`);
     console.log(`  Docker Image: ${config.dockerImageRef}`);
     console.log(`  Work Style: ${config.workStyle}`);
+    console.log(`The full config body:`);
+    console.log(JSON.stringify(config, null, 2));
 
     let gitRemoteUrl: string;
     try {
