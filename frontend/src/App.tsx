@@ -4,6 +4,7 @@ import { Activity, Home, Settings, FolderOpen, Play, Square, Power } from 'lucid
 import { usePolling } from './hooks/usePolling';
 import apiService from './services/api';
 import type { Health, Dashboard } from './types';
+import { AnalyzerProvider } from './contexts/AnalyzerContext';
 
 // Import pages (we'll create these next)
 import DashboardPage from './pages/DashboardPage';
@@ -110,13 +111,15 @@ export default function App() {
   return (
     <Router>
       <Layout>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/analyzer" element={<AnalyzerPage />} />
-          <Route path="/task-solver" element={<TaskSolverPage />} />
-          <Route path="/workspace" element={<WorkspacePage />} />
-        </Routes>
+        <AnalyzerProvider>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/analyzer" element={<AnalyzerPage />} />
+            <Route path="/task-solver" element={<TaskSolverPage />} />
+            <Route path="/workspace" element={<WorkspacePage />} />
+          </Routes>
+        </AnalyzerProvider>
       </Layout>
     </Router>
   );

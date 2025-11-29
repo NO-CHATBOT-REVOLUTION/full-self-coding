@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 export const serverState: ServerState = {
   codeAnalyzer: { status: 'idle' },
   taskSolverManager: { status: 'idle' },
+  githubAnalyzer: { status: 'idle' },
   tasks: new Map()
 };
 

@@ -9,6 +9,8 @@ import analyzerRoutes from './routes/analyzer';
 import taskSolverRoutes from './routes/taskSolver';
 import workspaceRoutes from './routes/workspace';
 import systemRoutes from './routes/system';
+import githubAnalyzerRoutes from './routes/githubAnalyzer';
+import globalStateRoutes from './routes/globalState';
 
 export function startServer(port: number = 3000) {
   // Create Express app
@@ -33,6 +35,8 @@ export function startServer(port: number = 3000) {
   app.use('/api/analyzer', analyzerRoutes);
   app.use('/api/task-solver', taskSolverRoutes);
   app.use('/api/workspace', workspaceRoutes);
+  app.use('/api/github-analyzer', githubAnalyzerRoutes);
+  app.use('/api/global-state', globalStateRoutes);
   app.use('/api', systemRoutes);
 
   // Error handling middleware

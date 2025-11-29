@@ -9,7 +9,11 @@ import type {
   CreateRemoteTaskRequest,
   CreateTaskResponse,
   CleanupRequest,
-  CleanupResponse
+  CleanupResponse,
+  GitHubAnalysisRequest,
+  GitHubAnalysisResponse,
+  GitHubAnalysisReport,
+  GitHubAnalyzerState
 } from '../types';
 
 class ApiService {
@@ -218,6 +222,60 @@ class ApiService {
     return this.request<{ taskId: string; status: string }>({
       method: 'POST',
       url: `/api/emergency-stop/task-solver/${taskId}`
+    });
+  }
+
+  // GitHub Analyzer endpoints
+  async startGitHubAnalysis(request: GitHubAnalysisRequest): Promise<GitHubAnalysisResponse> {
+    return this.request<GitHubAnalysisResponse>({
+      method: 'POST',
+      url: '/api/github-analyzer/analyze',
+      data: request
+    });
+  }
+
+  async getGitHubAnalysisStatus(): Promise<GitHubAnalyzerState> {
+    return this.request<GitHubAnalyzerState>({
+      method: 'GET',
+      url: '/api/github-analyzer/status'
+    });
+  }
+
+  async getGitHubAnalysisReport(): Promise<GitHubAnalysisReport> {
+    return this.request<GitHubAnalysisReport>({
+      method: 'GET',
+      url: '/api/github-analyzer/report'
+    });
+  }
+
+  async stopGitHubAnalysis(): Promise<{ taskId: string; previousStatus: string; currentStatus: string }> {
+    return this.request<{ taskId: string; previousStatus: string; currentStatus: string }>({
+      method: 'POST',
+      url: '/api/github-analyzer/stop'
+    });
+  }
+
+  // Code Analyzer global state endpoints
+  async getAnalyzerGlobalState(): Promise<{
+    currentStatus: any;
+    statistics: any;
+    timestamp: string;
+  }> {
+    return this.request({
+      method: 'GET',
+      url: '/api/analyzer/global-state'
+    });
+  }
+
+  async getAnalyzerHistory(): Promise<{
+    results: any[];
+    statistics: any;
+    totalResults: number;
+    timestamp: string;
+  }> {
+    return this.request({
+      method: 'GET',
+      url: '/api/analyzer/history'
     });
   }
 }

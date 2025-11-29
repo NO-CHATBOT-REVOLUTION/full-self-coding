@@ -31,9 +31,25 @@ export interface TaskSolverManagerState {
   completedAt?: Date;
 }
 
+export interface GitHubAnalyzerState {
+  status: 'idle' | 'initializing' | 'cloning' | 'analyzing' | 'solving' | 'committing' | 'generating_report' | 'completed' | 'stopped' | 'error';
+  taskId?: string;
+  githubUrl?: string;
+  tempDir?: string;
+  progress?: number;
+  taskCount?: number;
+  reports?: any[];
+  summary?: any;
+  reportPath?: string;
+  error?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+}
+
 export interface ServerState {
   codeAnalyzer: CodeAnalyzerState;
   taskSolverManager: TaskSolverManagerState;
+  githubAnalyzer: GitHubAnalyzerState;
   tasks: Map<string, ServerTask>;
 }
 

@@ -105,3 +105,37 @@ export interface CleanupResponse {
   cleaned: number;
   olderThanDays: number;
 }
+
+export interface GitHubAnalyzerState {
+  status: 'idle' | 'initializing' | 'cloning' | 'analyzing' | 'solving' | 'committing' | 'generating_report' | 'completed' | 'stopped' | 'error';
+  taskId?: string;
+  githubUrl?: string;
+  tempDir?: string;
+  progress?: number;
+  taskCount?: number;
+  reports?: any[];
+  summary?: any;
+  reportPath?: string;
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface GitHubAnalysisRequest {
+  githubUrl: string;
+}
+
+export interface GitHubAnalysisResponse {
+  taskId: string;
+  status: string;
+  message: string;
+}
+
+export interface GitHubAnalysisReport {
+  taskId: string;
+  githubUrl: string;
+  reports: any[];
+  summary: any;
+  startedAt: string;
+  completedAt: string;
+}
