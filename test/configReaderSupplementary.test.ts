@@ -1,9 +1,9 @@
 import { expect, test, describe, beforeAll, afterAll } from "bun:test";
 import * as fs from 'fs';
 import * as path from 'path';
-import { ConfigReader, readConfig } from '../src/configReader';
-import { SWEAgentType } from '../src/config';
-import { WorkStyle } from '../src/workStyle';
+import { ConfigReader, readConfig } from '../src/core/configReader';
+import { SWEAgentType } from '../src/core/config';
+import { WorkStyle } from '../src/core/workStyle';
 
 describe('ConfigReader with Supplementary Configuration', () => {
     const testDir = process.cwd(); // Should be the project root

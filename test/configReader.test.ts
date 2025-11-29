@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
-import { ConfigReader, readConfig, readConfigWithEnv } from '../src/configReader';
-import { SWEAgentType, DEFAULT_CONFIG } from '../src/config';
-import { WorkStyle } from '../src/workStyle';
+import { ConfigReader, readConfig, readConfigWithEnv } from '../src/core/configReader';
+import { SWEAgentType, DEFAULT_CONFIG } from '../src/core/config';
+import { WorkStyle } from '../src/core/workStyle';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

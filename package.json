@@ -1,19 +1,39 @@
 {
   "name": "full-self-coding",
   "version": "1.0.1",
-  "description": "A CLI tool for automated code analysis and task execution",
+  "description": "A CLI tool and core library for automated code analysis and task execution",
+  "main": "dist/main.js",
   "module": "src/main.ts",
   "type": "module",
   "bin": {
-    "full-self-coding": "./src/main.ts"
+    "full-self-coding": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/core",
+    "src/cli"
   ],
   "scripts": {
-    "build": "bun build ./src/main.ts --target bun --outdir dist",
+    "build": "bun build ./src/main.ts --target bun --outdir dist --sourcemap && bun build ./src/core/index.ts --target bun --outdir dist/core --sourcemap && bun build ./src/cli/index.ts --target bun --outdir dist/cli --sourcemap",
+    "build:core": "bun build ./src/core/index.ts --target bun --outdir dist/core --sourcemap",
+    "build:cli": "bun build ./src/cli/index.ts --target bun --outdir dist/cli --sourcemap",
     "prepare": "bun run build",
-    "start": "bun src/main.ts"
+    "start": "bun src/main.ts",
+    "dev": "bun --watch src/main.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

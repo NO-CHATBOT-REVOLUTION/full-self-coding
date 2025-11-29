@@ -1,9 +1,9 @@
 import { expect, test, mock } from "bun:test";
-import { analyzeCodebase } from "../src/analyzer";
-import { type Config, SWEAgentType } from "../src/config";
-import type { Task } from "../src/task";
-import { WorkStyle } from "../src/workStyle";
-import { DockerInstance, DockerRunStatus } from "../src/dockerInstance";
+import { analyzeCodebase } from "../src/core/analyzer";
+import { type Config, SWEAgentType } from "../src/core/config";
+import type { Task } from "../src/core/task";
+import { WorkStyle } from "../src/core/workStyle";
+import { DockerInstance, DockerRunStatus } from "../src/core/dockerInstance";
 import {CLAUDE_CODE_API_KEY, CLAUDE_CODE_API_URL} from "./apiKeySetup";
 
 

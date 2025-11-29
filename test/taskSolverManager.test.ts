@@ -1,10 +1,10 @@
-import { TaskSolverManager } from '../src/taskSolverManager';
-import type { Task, TaskResult } from '../src/task';
-import { TaskStatus } from '../src/task';
-import type { Config } from '../src/config';
-import { TaskSolver } from '../src/taskSolver';
+import { TaskSolverManager } from '../src/core/taskSolverManager';
+import type { Task, TaskResult } from '../src/core/task';
+import { TaskStatus } from '../src/core/task';
+import type { Config } from '../src/core/config';
+import { TaskSolver } from '../src/core/taskSolver';
 import { describe, it, expect, mock, test, beforeEach } from "bun:test";
-import { SWEAgentType } from '../src/config';
+import { SWEAgentType } from '../src/core/config';
 
 const mockTaskSolver = mock((config: Config, task: Task, agentType: any, gitURL: string) => ({
     solve: mock(() => Promise.resolve()),

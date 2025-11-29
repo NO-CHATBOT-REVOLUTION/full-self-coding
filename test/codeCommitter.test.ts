@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach, test } from "bun:test";
-import { CodeCommitter, type GitStateOptions } from '../src/codeCommitter';
-import type { TaskResult } from '../src/task';
-import { TaskStatus } from '../src/task';
+import { CodeCommitter, type GitStateOptions } from '../src/core/codeCommitter';
+import type { TaskResult } from '../src/core/task';
+import { TaskStatus } from '../src/core/task';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

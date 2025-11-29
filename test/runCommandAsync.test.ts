@@ -1,5 +1,5 @@
 import { expect, test, describe, beforeAll, afterAll, jest } from 'bun:test';
-import { DockerInstance, DockerRunStatus } from '../src/dockerInstance';
+import { DockerInstance, DockerRunStatus } from '../src/core/dockerInstance';
 
 // Mock console methods to avoid noise in tests
 const originalConsoleLog = console.log;

@@ -1,10 +1,10 @@
 import { describe, it, expect, mock, test } from "bun:test";
-import { TaskSolver } from "../src/taskSolver";
-import {  TaskStatus } from "../src/task";
-import {  SWEAgentType } from "../src/config";
-import type { Task } from "../src/task";
-import type { Config } from "../src/config";
-import { WorkStyle } from "../src/workStyle";
+import { TaskSolver } from "../src/core/taskSolver";
+import {  TaskStatus } from "../src/core/task";
+import {  SWEAgentType } from "../src/core/config";
+import type { Task } from "../src/core/task";
+import type { Config } from "../src/core/config";
+import { WorkStyle } from "../src/core/workStyle";
 import {CLAUDE_CODE_API_KEY, CLAUDE_CODE_API_URL} from "./apiKeySetup";
 
 test("run a task with claude code agent", async () => {

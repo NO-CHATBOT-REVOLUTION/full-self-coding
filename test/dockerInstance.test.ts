@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { spawnSync } from "bun"; // Added this line
-import { DockerInstance, DockerRunStatus } from "../src/dockerInstance";
+import { DockerInstance, DockerRunStatus } from "../src/core/dockerInstance";
 
 test("DockerInstance runs echo and captures output using separate functions", async () => {
     const instance = new DockerInstance();
