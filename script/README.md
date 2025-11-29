@@ -11,14 +11,26 @@ This directory contains automated setup scripts to install and configure the com
 ## 📋 What Gets Installed
 
 ### Core Dependencies
-- **Node.js** (LTS version) - JavaScript runtime
+- **Bun.js** (v1.0.0+) - Primary JavaScript runtime and TypeScript executor
+- **Docker** (latest) - Container platform for isolated task execution
+- **Git** - Version control system (for repository operations)
+
+### Optional Dependencies
+- **Node.js** (LTS version) - Alternative JavaScript runtime (for compatibility)
 - **npm** - Node package manager (included with Node.js)
-- **Bun.js** - Fast JavaScript runtime and package manager
-- **Docker** - Container platform for isolated task execution
 
 ### Docker Images
 - **node:latest** - Primary Docker image for container execution
 - **Optional**: ubuntu:latest, alpine:latest (useful for development)
+
+## 🎯 TypeScript-First Development
+
+The Full Self Coding project is built as a **pure TypeScript monorepo** that runs directly from source files using Bun runtime:
+
+- **No Build Step Required**: TypeScript files are executed directly
+- **Fast Development**: Edit source and immediately run without compilation
+- **Type Safety**: Full TypeScript support with strict mode enabled
+- **Package-Based Architecture**: Monorepo with separate npm packages for core and CLI
 
 ## 🛠️ Usage Instructions
 

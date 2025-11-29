@@ -58,10 +58,9 @@ Full Self Coding (FSC) is a sophisticated framework designed to automate softwar
 
 ### Prerequisites
 
-- **Node.js** (v18.0.0 or higher)
+- **Bun** (v1.0.0 or higher)
 - **Docker** (latest version)
 - **Git** (for repository operations)
-- **Bun** (recommended for package management)
 
 
 ### Quick Start
@@ -71,17 +70,42 @@ Full Self Coding (FSC) is a sophisticated framework designed to automate softwar
    curl -fsSL https://bun.sh/install | bash
    ```
 
-2. **Install full-self-coding package**
+2. **Clone and setup the project**
    ```bash
-   bun install -g full-self-coding
+   git clone https://github.com/NO-CHATBOT-REVOLUTION/full-self-coding.git
+   cd full-self-coding
+   bun install
    ```
 
 3. **Run on a repository**
    ```bash
-   git clone https://github.com/user/repo.git
-   cd repo
+   # Run CLI from source
+   bun run start
+
+   # Or run on a specific repository
    full-self-coding
    ```
+
+### Installation as npm Package
+
+The project is structured as a monorepo with two main packages:
+
+- **@full-self-coding/core**: Core library for code analysis and task execution
+- **@full-self-coding/cli**: Command-line interface
+
+#### Core Package
+
+```bash
+npm install @full-self-coding/core
+```
+
+#### CLI Package
+
+```bash
+npm install -g @full-self-coding/cli
+# Then run:
+full-self-coding-cli
+```
 
 ## ⚙️ Configuration
 
@@ -172,10 +196,10 @@ export FSC_CODING_STYLE_LEVEL=9
 
 ### Command Line Interface
 
-The main CLI provides various options for configuration and execution:
+The CLI provides various options for configuration and execution:
 
 ```bash
-node dist/main.js [options] <git-repository-url>
+full-self-coding-cli run [options]
 ```
 
 #### Options
@@ -183,59 +207,42 @@ node dist/main.js [options] <git-repository-url>
 | Option | Short | Type | Description |
 |--------|-------|------|-------------|
 | `--agent-type` | `-a` | `string` | AI agent type (`claude-code`, `gemini-cli`) |
-| `--max-containers` | `-m` | `number` | Maximum Docker containers |
-| `--parallel-containers` | `-p` | `number` | Maximum parallel containers |
-| `--timeout` | `-t` | `number` | Docker timeout in seconds |
-| `--memory` | `-M` | `number` | Docker memory limit in MB |
-| `--cpu` | `-c` | `number` | Docker CPU cores |
-| `--work-style` | `-w` | `string` | Work style (`default`, `bold_genius`, etc.) |
-| `--coding-style-level` | `-l` | `number` | Coding style level (0-10) |
-| `--max-tasks` | `-T` | `number` | Maximum tasks to generate |
-| `--min-tasks` | `-n` | `number` | Minimum tasks to generate |
-| `--config-dir` | `-C` | `string` | Custom config directory |
-| `--no-supplementary` | - | `boolean` | Disable supplementary config reading |
-| `--env-override` | `-e` | `boolean` | Enable environment variable override |
+| `--config` | `-c` | `string` | Path to configuration file |
 | `--help` | `-h` | - | Show help information |
+| `--version` | `-V` | - | Show version information |
 
 ### Examples
 
 #### Basic Repository Analysis
 
 ```bash
-# Analyze a repository with default settings
-node dist/main.js https://github.com/example/awesome-project.git
+# Analyze current repository with default settings
+full-self-coding-cli run
+
+# Analyze with custom config
+full-self-coding-cli run --config ./my-config.json
 ```
 
-#### Advanced Configuration
+#### Core Library Usage
 
-```bash
-# Analyze with specific agent and resources
-node dist/main.js https://github.com/example/complex-project.git \
-  --agent-type claude-code \
-  --max-containers 15 \
-  --parallel-containers 5 \
-  --timeout 1200 \
-  --memory 4096 \
-  --cpu 4
-```
+```typescript
+import { analyzeCodebase, TaskSolverManager, createConfig } from '@full-self-coding/core';
 
-#### Custom Work Style
+// Create configuration
+const config = createConfig({
+  agentType: 'claude-code',
+  anthropicAPIKey: 'your-api-key'
+});
 
-```bash
-# Use custom work style and coding level
-node dist/main.js https://github.com/example/creative-project.git \
-  --work-style bold_genius \
-  --coding-style-level 8 \
-  --max-tasks 200
-```
+// Analyze repository
+const tasks = await analyzeCodebase(config, 'https://github.com/user/repo.git');
 
-#### Project-specific Configuration
-
-```bash
-# Use project-specific configuration
-node dist/main.js https://github.com/my-org/my-project.git \
-  --config-dir ./project-config \
-  --no-supplementary
+// Execute tasks
+const taskSolver = new TaskSolverManager(config, 'https://github.com/user/repo.git');
+for (const task of tasks) {
+  taskSolver.addTask(task);
+}
+await taskSolver.start();
 ```
 
 ## 🔧 API Reference
@@ -247,36 +254,31 @@ node dist/main.js https://github.com/my-org/my-project.git \
 Manages configuration loading, validation, and merging.
 
 ```typescript
-import { ConfigReader, readConfig } from './src/configReader';
+import { ConfigReader, readConfigWithEnv } from '@full-self-coding/core';
 
-// Create with custom options
-const reader = new ConfigReader({
-  configDir: '/custom/path',
-  throwOnMissing: true,
-  readSupplementaryConfig: true
+// Read configuration with environment variable support
+const config = readConfigWithEnv();
+
+// Create custom configuration
+import { createConfig } from '@full-self-coding/core';
+const customConfig = createConfig({
+  agentType: 'claude-code',
+  anthropicAPIKey: 'your-api-key'
 });
-
-// Read configuration
-const config = reader.readConfig();
-
-// Read with environment variable override
-const configWithEnv = reader.readConfigWithEnvOverride();
 ```
 
 **Methods**
 
-- `readConfig(): Config` - Read and validate configuration
-- `readConfigWithEnvOverride(): Config` - Read config with environment variables
-- `writeConfig(config: Partial<Config>): void` - Write configuration to file
-- `configExists(): boolean` - Check if configuration file exists
-- `getConfigPath(): string` - Get configuration file path
+- `readConfigWithEnv(): Config` - Read config with environment variables
+- `createConfig(userConfig: Partial<Config>): Config` - Create configuration from user config
+- `getGitRemoteUrls(useSSH?: boolean): Promise<{fetchUrl: string, pushUrl: string}>` - Get git remote URLs
 
 #### DockerInstance
 
 Manages Docker container lifecycle and operations.
 
 ```typescript
-import { DockerInstance, DockerRunStatus } from './src/dockerInstance';
+import { DockerInstance, DockerRunStatus } from '@full-self-coding/core';
 
 const docker = new DockerInstance();
 
@@ -311,8 +313,7 @@ await docker.shutdownContainer();
 Executes individual tasks within Docker containers.
 
 ```typescript
-import { TaskSolver } from './src/taskSolver';
-import { SWEAgentType } from './src/config';
+import { TaskSolver, SWEAgentType } from '@full-self-coding/core';
 
 const taskSolver = new TaskSolver(
   config,
@@ -338,14 +339,12 @@ const result = taskSolver.getResult();
 Analyzes codebases and generates task lists.
 
 ```typescript
-import { analyzeCodebase } from './src/analyzer';
+import { analyzeCodebase } from '@full-self-coding/core';
 
 // Analyze a repository
 const tasks = await analyzeCodebase(
   config,
-  'https://github.com/user/repo.git',
-  true, // shutdown container
-  'npm run build' // extra commands before analysis
+  'https://github.com/user/repo.git'
 );
 ```
 
@@ -395,23 +394,25 @@ enum WorkStyle {
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests from project root
+bun run test
+
+# Or run from core package
+cd packages/core
 bun test
 
-# Run specific test files
-bun test test/dockerInstance.test.ts
-bun test test/configReaderSupplementary.test.ts
-
-# Run with coverage
-bun test --coverage
+# Run with timeout
+bun test --timeout 30000
 ```
 
 ### Test Structure
 
 ```
-test/
+packages/core/test/
 ├── dockerInstance.test.ts           # Docker functionality tests
 ├── configReaderSupplementary.test.ts # Configuration system tests
+├── taskSolverClaudeCode.test.ts     # Claude Code task solver tests
+├── taskSolverGemini.test.ts         # Gemini task solver tests
 └── integration/                     # Integration tests
     ├── full-workflow.test.ts        # End-to-end workflow tests
     └── multi-agent.test.ts          # Multi-agent integration tests
@@ -421,7 +422,7 @@ test/
 
 ```typescript
 import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
-import { DockerInstance } from '../src/dockerInstance';
+import { DockerInstance } from '@full-self-coding/core';
 
 describe('DockerInstance', () => {
   let docker: DockerInstance;
@@ -546,7 +547,7 @@ node dist/main.js --debug https://github.com/user/repo.git
 
 1. **Fork and clone**
    ```bash
-   git clone https://github.com/your-username/full-self-coding.git
+   git clone https://github.com/NO-CHATBOT-REVOLUTION/full-self-coding.git
    cd full-self-coding
    ```
 
@@ -555,27 +556,21 @@ node dist/main.js --debug https://github.com/user/repo.git
    bun install
    ```
 
-3. **Set up pre-commit hooks**
-   ```bash
-   bun run setup-hooks
-   ```
-
 ### Code Style
 
 - **TypeScript**: Strict mode enabled
-- **ESLint**: Airbnb style guide
-- **Prettier**: Consistent formatting
-- **Husky**: Pre-commit hooks
+- **Pure TypeScript**: No build step required
+- **Bun**: Fast JavaScript runtime
 
 ```bash
-# Lint code
-bun run lint
+# Run tests
+bun run test
 
-# Format code
-bun run format
+# Run development server
+bun run dev
 
-# Run pre-commit checks
-bun run pre-commit
+# Start CLI
+bun run start
 ```
 
 ### Testing Requirements
@@ -585,11 +580,11 @@ bun run pre-commit
 - **Integration Tests**: Critical workflows must be tested
 
 ```bash
-# Run tests with coverage
-bun run test:coverage
+# Run tests
+bun run test
 
-# Generate coverage report
-bun run coverage:report
+# Run tests with timeout
+bun run test --timeout 30000
 ```
 
 ### Pull Request Process
@@ -601,9 +596,7 @@ bun run coverage:report
 
 2. **Make changes and test**
    ```bash
-   bun run lint
    bun run test
-   bun run build
    ```
 
 3. **Commit and push**
