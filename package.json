@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "cd packages/cli && bun run dev",
     "start": "cd packages/cli && bun run start",
+    "server": "cd packages/server && bun run start",
+    "server:dev": "cd packages/server && bun run dev",
     "test": "cd packages/core && bun run test",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "legacy:build": "bun build ./src/main.ts --target bun --outdir dist --sourcemap",

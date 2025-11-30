@@ -12,8 +12,9 @@ export { createConfig, type Config } from './config';
 export { readConfigWithEnv } from './configReader';
 
 // Types and interfaces
-export type { Task } from './task';
-export type { CodingStyle } from './codingStyle';
+export type { Task, TaskResult } from './task';
+export { TaskStatus } from './task';
+export type { codingStyles } from './codingStyle';
 export type { WorkStyle } from './workStyle';
 
 // Utilities

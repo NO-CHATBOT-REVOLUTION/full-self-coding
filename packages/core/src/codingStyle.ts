@@ -14,3 +14,5 @@ export function getCodingStyle(
 
     return `Coding style for level ${level} not found.`;
 }
+
+export { codingStyles } from './prompts/codingStylePrompt';
