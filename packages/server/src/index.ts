@@ -259,4 +259,47 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
+// Function to create a server instance with custom options
+export function createServer(options: {
+  port?: number;
+  host?: string;
+  cors?: any;
+  helmet?: any;
+} = {}) {
+  const serverApp = express();
+
+  // Handle null options
+  const safeOptions = options || {};
+
+  // Apply middleware with custom options
+  serverApp.use(helmet(safeOptions.helmet || {}));
+  serverApp.use(cors(safeOptions.cors || {}));
+  serverApp.use(express.json({ limit: '10mb' }));
+  serverApp.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  serverApp.use(compression());
+
+  // API routes
+  serverApp.use('/api/tasks', taskRoutes);
+  serverApp.use('/api/state', stateRoutes);
+
+  // Root endpoint
+  serverApp.get('/', (req, res) => {
+    res.json({
+      name: 'Full Self Coding Server',
+      version: '1.0.0',
+      status: 'running'
+    });
+  });
+
+  // Health check
+  serverApp.get('/health', healthCheck);
+
+  // 404 handler
+  serverApp.use('*', (req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+  });
+
+  return serverApp;
+}
+
 export default app;

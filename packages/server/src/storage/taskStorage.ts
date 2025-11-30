@@ -16,8 +16,6 @@ export class TaskStorage {
     this.storageDir = config.storageDir || path.join(os.homedir(), '.full-self-coding-server');
     this.tasksDir = path.join(this.storageDir, 'tasks');
     this.reportsDir = path.join(this.storageDir, 'reports');
-
-    this.initializeDirectories();
   }
 
   private async initializeDirectories(): Promise<void> {
@@ -31,10 +29,24 @@ export class TaskStorage {
     }
   }
 
+  private async ensureInitialized(): Promise<void> {
+    // Ensure directories are created before any operation
+    await this.initializeDirectories();
+  }
+
+  /**
+   * Public method to initialize directories (useful for testing)
+   */
+  public async initialize(): Promise<void> {
+    await this.ensureInitialized();
+  }
+
   /**
    * Save a task state to storage
    */
   public async saveTask(taskState: GlobalTaskState): Promise<void> {
+    await this.ensureInitialized();
+
     const taskFile = path.join(this.tasksDir, `${taskState.id}.json`);
 
     try {
@@ -53,6 +65,8 @@ export class TaskStorage {
    * Load a task state from storage
    */
   public async loadTask(taskId: string): Promise<GlobalTaskState | null> {
+    await this.ensureInitialized();
+
     const taskFile = path.join(this.tasksDir, `${taskId}.json`);
 
     try {
