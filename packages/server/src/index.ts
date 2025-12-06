@@ -240,7 +240,6 @@ const server = app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📚 API docs: http://localhost:${PORT}/api`);
   console.log(`🗃️  Storage directory: ${taskStorage['storageDir'] || '~/.full-self-coding-server'}`);
-  console.log(`⏱️  Rate limits: 10 tasks/hour, 1000 requests/15min`);
   console.log(`⚡ Powered by Bun runtime`);
 });
 

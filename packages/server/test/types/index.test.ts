@@ -2,6 +2,10 @@ import { describe, it, expect } from 'bun:test';
 import {
   TaskStatus,
   TaskInputType,
+
+} from '../../src/types/index.js';
+
+import type {
   TaskInput,
   AnalyzerProgress,
   TaskSolverProgress,
